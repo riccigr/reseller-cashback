@@ -1,7 +1,7 @@
 const mysql = require('mysql');
 const properties = require('../config/properties').properties;
 
-function createDbConnection(){
+const createDbConnection = () => {
 
     if(process.env.NODE_ENV === 'production'){
         var url = process.env.DB_DATABASE_URL;

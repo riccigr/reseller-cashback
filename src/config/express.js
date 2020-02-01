@@ -13,6 +13,7 @@ module.exports = () => {
         .include('services')
         .then('database')
         .then('routes')
+        .then('dao')
         .into(app);
 
     return app;

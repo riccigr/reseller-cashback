@@ -15,6 +15,6 @@ resellerDAO.prototype.getById = function(id, callback) {
 }
 
 
-module.exports = function(){
+module.exports = () => {
     return resellerDAO;
 }

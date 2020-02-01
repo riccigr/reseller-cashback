@@ -17,19 +17,18 @@ module.exports = app => {
     
       const reseller = request.body['reseller'];
     
-      const connection = app.database.connectionFactory();
-      const dao = new app.database.resellerDAO(connection);
+      const connection = app.database.connectionFactory();   
+      const dao = new app.dao.resellerDAO(connection);
     
       dao.save(reseller, (err, result) => {
         if (err) {
-          res.status(500).send("erro");
+          response.status(500).send("erro");
           connection.end();
           return;
         }
     
         reseller.id = result.insertId;
-        response.location('/reseller/' + reseller.id);
-        response.status(201).json(reseller);
+       // response.location('/reseller/' + reseller.id);
       });
     
       connection.end();
