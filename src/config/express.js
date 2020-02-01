@@ -11,6 +11,7 @@ module.exports = () => {
 
     consign({cwd: 'src'})
         .include('services')
+        .then('database')
         .then('routes')
         .into(app);
 

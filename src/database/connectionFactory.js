@@ -1,0 +1,40 @@
+const mysql = require('mysql');
+const properties = require('../config/properties').properties;
+
+function createDbConnection(){
+
+    if(process.env.NODE_ENV === 'production'){
+        var url = process.env.DB_DATABASE_URL;
+        var groups = url.match(/mysql:\/\/(.*):(.*)@(.*)\/(.*)\?/);
+        return mysql.createConnection({
+            host : groups[3],
+            user : groups[1],
+            password : groups[2],
+            database : groups[4]
+        });
+    }
+
+    if(!process.env.NODE_ENV || process.env.NODE_ENV === 'dev'){
+        return mysql.createConnection({
+            host : properties.database.dev.host,
+            user : properties.database.dev.user,
+            password : properties.database.dev.password,
+            database : properties.database.dev.database
+        });
+    }
+
+    if(process.env.NODE_ENV === 'test'){
+        return mysql.createConnection({
+            host : properties.database.test.host,
+            user : properties.database.test.user,
+            password : properties.database.test.password,
+            database : properties.database.test.database
+        });
+    }
+
+}
+
+//wrapper
+module.exports = () => {
+    return createDbConnection;
+}

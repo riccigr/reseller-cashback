@@ -1,11 +1,21 @@
 const properties = {
-    'express': {
-        'port': 3000
+  express: {
+    port: 3000
+  },
+  database: {
+    dev: {
+      host: 'localhost',
+      user: 'root',
+      password: 'root',
+      database: 'db_reseller'
     },
-    'database':{
-        
+    test: {
+      host: 'localhost',
+      user: 'root',
+      password: 'root',
+      database: 'db_reseller_test'
     }
-}
+  }
+};
 
-
-module.exports = { properties }
+module.exports = { properties };
