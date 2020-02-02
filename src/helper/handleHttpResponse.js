@@ -58,6 +58,12 @@ const handleHttp = {
             .status(504)
             .send();
     },
+
+    Unauthorized: (body, response) => {
+        response
+            .status(401)
+            .send(body);
+    },
 }
 
 module.exports = { handleHttp };

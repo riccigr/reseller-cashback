@@ -2,6 +2,10 @@ const properties = {
   express: {
     port: 3000
   },
+  jwt: {
+    secret: 'extremesecret',
+    expiresIn : 300
+  },
   database: {
     dev: {
       host: 'localhost',
