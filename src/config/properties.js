@@ -15,6 +15,15 @@ const properties = {
       password: 'root',
       database: 'db_reseller_test'
     }
+  },
+  winston: {
+    logDir: "logs",
+    level: "info",
+    filename: "logs/info.log",
+    maxsize: 6000,
+    maxFiles:10,
+    handleExceptions: true,
+    humanReadableUnhandleExceptions : true
   }
 };
 

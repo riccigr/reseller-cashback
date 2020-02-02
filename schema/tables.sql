@@ -1,11 +1,10 @@
 use db_reseller;
 
-CREATE TABLE `reseller` 
+CREATE TABLE `revendedor` 
 (
-	`id` int(10) unsigned not null auto_increment,
-    `full_name` varchar(50) not null,
-    `cpf` varchar(14) not null unique,
+	`cpf` varchar(14) not null unique,
+    `nome` varchar(50) not null,
     `email` varchar(255) not null unique,
-    `pass` varchar(255) not null,
-    primary key (`id`)    
+    `senha` varchar(255) not null,
+    primary key (`cpf`)    
 );
