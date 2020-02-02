@@ -2,7 +2,8 @@ function purchaseDAO(connection){
     this._connection = connection;
 }
 
-purchaseDAO.prototype.save = function(purchase, callback){
+purchaseDAO.prototype.save = function(purchase, callback){    
+    console.log(purchase);
     this._connection.query('INSERT INTO compra SET ?', purchase, callback);
 }
 

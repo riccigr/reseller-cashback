@@ -20,10 +20,10 @@ module.exports = () => {
     app.use(expressValidator());
 
     consign({cwd: 'src'})
-        .include('services')
-        .then('database')
-        .then('routes')
+        .include('database')
         .then('dao')
+        .then('services')
+        .then('routes')
         .into(app);
 
     return app;

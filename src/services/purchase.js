@@ -1,18 +1,21 @@
 const constants = require('../helper/constants');
 const logger = require('../helper/logger');
 const purchaseStatus = require('../helper/status').PurchaseStatus;
+const handleHttp = require('../helper/handleHttpResponse').handleHttp;
 
 const purchase = app => {
   const service = {};
-  create(service, app);
+  const connection = app.database.connectionFactory();
+  const dao = new app.dao.purchaseDAO(connection);
+  create(service, dao);
   update(service, app);
   remove(service, app);
   return service;
 };
 
 // -- Insert a new purchase
-const create = (service, app) => {
-  service.create = (request, response) => {
+const create = async (service, dao) => {
+  service.create = async (request, response) => {
     logger.info('create received');
 
     // -- validate request;
@@ -24,25 +27,20 @@ const create = (service, app) => {
     }
     // -- prepare database connection
     const purchase = request.body['compra'];
-    const connection = app.database.connectionFactory();
-    const dao = new app.dao.purchaseDAO(connection);
 
-    setSpecialConditions(purchase);
+    setStatus(purchase);
+    setCashback(purchase);
 
-    dao.save(purchase, (err, result) => {
-      if (err) {
-        logger.info(constants.INTERNAL_ERROR_LOG + err);
-        // response.status(500).send({error: 'Não conseguimos incluir a compra.'}); // TODO handle duplicate
-        response.status(500).send(err); // TODO handle duplicate
-        connection.end();
-        return;
-      }
-      logger.info('SQL Result for create: ' + result);
-      connection.end();
-      
-      handleResponseCreate(purchase, response);
-      logger.info('create end!!!');
-    });
+    saveIntoDatabase(dao, purchase, response)
+      .then(() => {
+        handleHttp.Create(purchase, response);
+      })
+      .catch((err) => {
+        if (err.code === 'ER_DUP_ENTRY'){
+          handleHttp.Duplicate(response);
+        }
+        handleHttp.InternalError(response);
+      });
   };
 };
 
@@ -65,14 +63,13 @@ const update = async (service, app) => {
     const dao = new app.dao.purchaseDAO(connection);
 
     // -- search for purchase async
-    const purchase = await findPurchaseById(dao, id)
-      .then(rows => {
-        return rows[0];
-      })
+    const purchase = await findPurchaseById(dao, id).then(rows => {
+      return rows[0];
+    });
 
-    if (purchase) {      
+    if (purchase) {
       logger.info('Compra encontrada: ' + id);
-      if (purchase.status !== purchaseStatus.PENDING){
+      if (purchase.status !== purchaseStatus.PENDING) {
         handleResponsePreconditionFailed(response);
         return;
       }
@@ -89,7 +86,7 @@ const update = async (service, app) => {
         }
         logger.info('SQL Result for update: ' + JSON.stringify(result));
         connection.end();
-        
+
         handleResponseUpdate(changedPurchase, response);
         logger.info('create end!!!');
       });
@@ -113,14 +110,13 @@ const remove = async (service, app) => {
     const dao = new app.dao.purchaseDAO(connection);
 
     // -- search for purchase async
-    const purchase = await findPurchaseById(dao, id)
-      .then(rows => {
-        return rows;
-      })
+    const purchase = await findPurchaseById(dao, id).then(rows => {
+      return rows;
+    });
 
-    if (purchase) {      
+    if (purchase) {
       logger.info('Compra encontrada: ' + id);
-      if (purchase.status !== purchaseStatus.PENDING){
+      if (purchase.status !== purchaseStatus.PENDING) {
         handleResponsePreconditionFailed(response);
         return;
       }
@@ -134,9 +130,9 @@ const remove = async (service, app) => {
         }
         logger.info('SQL Result for delete: ' + JSON.stringify(result));
         connection.end();
-        
+
         handleResponseNoContent(response);
-        logger.info('create end!!!');
+        logger.info('delete end!!!');
       });
     } else {
       logger.info('Compra não encontrada: ' + request.params.id);
@@ -153,24 +149,7 @@ const isValidRequest = request => {
   request.assert('compra.data', 'Data é obrigatória').notEmpty(); // TODO check size
   request.assert('compra.cpf', 'cpf é obrigatório').notEmpty(); // TODO check regex and algo
   const invalid = request.validationErrors();
-  console.log(invalid);
   return invalid;
-};
-
-const handleResponseCreate = (purchase, response) => {
-  response.status(201).json(purchase);
-};
-
-const handleResponsePreconditionFailed = (response) => {
-    response.status(422).send({'erro': 'O status atual não permite essa operação'});
-};
-
-const handleResponseUpdate = (purchase, response) => {
-  response.status(200).json(purchase);
-};
-
-const handleResponseNoContent = (response) => {
-  response.status(204).send();
 };
 
 const findPurchaseById = async (dao, id) => {
@@ -185,13 +164,43 @@ const findPurchaseById = async (dao, id) => {
   });
 };
 
+const saveIntoDatabase = async (dao, purchase, response) => {
+  return new Promise(async (resolve, reject) => {
+    await dao.save(purchase, (err, result) => {
+      if (err) {
+        logger.info(constants.INTERNAL_ERROR_LOG + err);
+        // response.status(500).send({error: 'Não conseguimos incluir a compra.'}); // TODO handle duplicate
+        reject(err);
+      } else {
+        logger.info('SQL Result for create: ' + JSON.stringify(result));
+        resolve();
+      }
+    });
+  });
+};
+
 // -- used to set status when cpf is the same proposal
-const setSpecialConditions = (purchase) => {
-    if (purchase.cpf === '153.509.460-56') {
-        purchase.status = purchaseStatus.APPROVED;
-    }
-}
+const setStatus = purchase => {
+  if (purchase.cpf === '153.509.460-56') {
+    purchase.status = purchaseStatus.APPROVED;
+  }
+};
+
+// -- calculate cashback by purchase value
+const setCashback = purchase => {
+  const value = Number(purchase.valor);
+  if (value <= 1000) {
+    purchase.porcentagem_cashback = 10;
+    purchase.valor_cashback = ((value * 10) / 100).toFixed(2);
+  } else if (value > 1000 && value <= 1500) {
+    purchase.porcentagem_cashback = 15;
+    purchase.valor_cashback = ((value * 15) / 100).toFixed(2);
+  } else {
+    purchase.porcentagem_cashback = 20;
+    purchase.valor_cashback = ((value * 20) / 100).toFixed(2);
+  }
+};
+
 module.exports = app => {
   return purchase(app);
 };
-
