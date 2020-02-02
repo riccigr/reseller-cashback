@@ -22,8 +22,8 @@ const properties = {
     filename: "logs/info.log",
     maxsize: 6000,
     maxFiles:10,
-    handleExceptions: true,
-    humanReadableUnhandleExceptions : true
+    handleExceptions: false,
+    humanReadableUnhandleExceptions : false
   }
 };
 
