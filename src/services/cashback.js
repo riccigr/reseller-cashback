@@ -3,6 +3,7 @@ const constants = require('../helper/constants');
 const handleHttp = require('../helper/handleHttpResponse').handleHttp;
 const externalRequest = require('request');
 const properties = require('../config/properties').properties;
+const util = require('../helper/utils').util;
 
 const cashback = app => {
   const service = {};
@@ -15,10 +16,7 @@ const get = (service, app) => {
     logger.info('cashback get received');
 
     // -- prepare url  
-    let cpf = request.params.id;
-    cpf = cpf.replace('.','').replace('-','');
-    const queryParams = '?cpf=' + cpf;
-    const url = properties.externalApi.cashback.url + queryParams;
+    const url = mountURL(request.params.id);
 
     // -- call cashback api
     externalRequest.get(
@@ -29,20 +27,13 @@ const get = (service, app) => {
       },
       (err, res, body) => {
         if (err) {        
-          logger.info(constants.INTERNAL_ERROR_LOG + err);
-          if (err.code === 'ETIMEDOUT'){
-            handleHttp.BadGateway(response);
-          }
-          handleHttp.ServiceUnavailable(response);
+          handleErrors(err, response);
         }
         const payload = JSON.parse(body);
         logger.info('Resultado da consulta: ' + payload);
+        
         if (payload.statusCode === 200) {
-          const cashback = {};
-          let amount = payload.body.credit;
-          amount = amount / 100;
-          cashback.valor = amount;
-          handleHttp.Ok(cashback, response);
+          handleResponse(payload, response);
         } else {
           handleHttp.NotFound(response);
         }
@@ -52,6 +43,33 @@ const get = (service, app) => {
   };
 };
 
+const mountURL = (id) => {
+    const cpf = util.cleanupString(id);
+    const queryParams = '?cpf=' + cpf;
+    const url = properties.externalApi.cashback.url + queryParams;
+    logger.info('URL: ' + url);
+    return url;
+}
+
+const handleResponse = (payload, response) => {
+    const cashback = {};
+    cashback.valor = util.adjustDecimal(payload.body.credit);
+    logger.info('response: ' + cashback);
+    handleHttp.Ok(cashback, response);
+}
+
+const handleErrors = (err, response) => {
+    logger.info(constants.INTERNAL_ERROR_LOG + err);
+    if (err.code === 'ETIMEDOUT') {
+        handleHttp.BadGateway(response);
+    }
+    handleHttp.ServiceUnavailable(response);
+}
+
 module.exports = app => {
-  return cashback(app);
-};
+    return cashback(app);
+  };
+
+
+
+
