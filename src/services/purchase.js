@@ -6,6 +6,7 @@ const purchase = app => {
   const service = {};
   create(service, app);
   update(service, app);
+  remove(service, app);
   return service;
 };
 
@@ -101,6 +102,51 @@ const update = async (service, app) => {
   };
 };
 
+const remove = async (service, app) => {
+  service.remove = async (request, response) => {
+    logger.info('delete received');
+
+    const id = request.params.id;
+
+    // -- setup database
+    const connection = app.database.connectionFactory();
+    const dao = new app.dao.purchaseDAO(connection);
+
+    // -- search for purchase async
+    const purchase = await findPurchaseById(dao, id)
+      .then(rows => {
+        return rows;
+      })
+
+    if (purchase) {      
+      logger.info('Compra encontrada: ' + id);
+      if (purchase.status !== purchaseStatus.PENDING){
+        handleResponsePreconditionFailed(response);
+        return;
+      }
+      dao.remove(id, (err, result) => {
+        if (err) {
+          logger.info(constants.INTERNAL_ERROR_LOG + err);
+          // response.status(500).send({error: 'Não conseguimos incluir a compra.'}); // TODO handle duplicate
+          response.status(500).send(err); // TODO handle duplicate
+          connection.end();
+          return;
+        }
+        logger.info('SQL Result for delete: ' + JSON.stringify(result));
+        connection.end();
+        
+        handleResponseNoContent(response);
+        logger.info('create end!!!');
+      });
+    } else {
+      logger.info('Compra não encontrada: ' + request.params.id);
+      connection.end();
+      response.status(404).send();
+      return;
+    }
+  };
+};
+
 const isValidRequest = request => {
   // request.assert('compra.codigo', 'Codigo é obrigatório').notEmpty(); // TODO check regex and algo
   request.assert('compra.valor', 'Valor é obrigatório').notEmpty(); // TODO check regex and algo
@@ -123,6 +169,10 @@ const handleResponseUpdate = (purchase, response) => {
   response.status(200).json(purchase);
 };
 
+const handleResponseNoContent = (response) => {
+  response.status(204).send();
+};
+
 const findPurchaseById = async (dao, id) => {
   return new Promise(async (resolve, reject) => {
     await dao.getById(id, (err, result) => {
@@ -130,7 +180,7 @@ const findPurchaseById = async (dao, id) => {
         logger.info(constants.INTERNAL_ERROR_LOG + err);
         reject();
       }
-      resolve(result.length > 0 ? result : undefined);
+      resolve(result.length > 0 ? result[0] : undefined);
     });
   });
 };

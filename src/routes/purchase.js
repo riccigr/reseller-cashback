@@ -3,6 +3,7 @@ module.exports = (app) => {
 
     app.post('/compra', purchase.create);
     app.put('/compra/:id', purchase.update);
+    app.delete('/compra/:id', purchase.remove);
 
     return this;
 } 
