@@ -33,6 +33,12 @@ const handleHttp = {
         response
             .status(400)
             .send({ erro: 'registro duplicado.' });
+    },
+
+    NotFound: response => {
+        response
+            .status(404)
+            .send({ erro: 'registro não encontrado.' });
     }
 }
 

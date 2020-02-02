@@ -5,11 +5,10 @@ const handleHttp = require('../helper/handleHttpResponse').handleHttp;
 
 const purchase = app => {
   const service = {};
-  const connection = app.database.connectionFactory();
-  const dao = new app.dao.purchaseDAO(connection);
+  const dao = prepareDAO(app);
   create(service, dao);
-  update(service, app);
-  remove(service, app);
+  update(service, dao);
+  remove(service, dao);
   return service;
 };
 
@@ -25,18 +24,18 @@ const create = async (service, dao) => {
       response.status(422).send({ errors: invalid });
       return;
     }
-    // -- prepare database connection
+
     const purchase = request.body['compra'];
 
     setStatus(purchase);
     setCashback(purchase);
 
-    saveIntoDatabase(dao, purchase, response)
+    saveToDatabase(dao, purchase)
       .then(() => {
         handleHttp.Create(purchase, response);
       })
-      .catch((err) => {
-        if (err.code === 'ER_DUP_ENTRY'){
+      .catch(err => {
+        if (err.code === 'ER_DUP_ENTRY') {
           handleHttp.Duplicate(response);
         }
         handleHttp.InternalError(response);
@@ -44,7 +43,7 @@ const create = async (service, dao) => {
   };
 };
 
-const update = async (service, app) => {
+const update = async (service, dao) => {
   service.update = async (request, response) => {
     logger.info('update received');
 
@@ -57,57 +56,44 @@ const update = async (service, app) => {
       response.status(422).send({ errors: invalid });
       return;
     }
-
-    // -- setup database
-    const connection = app.database.connectionFactory();
-    const dao = new app.dao.purchaseDAO(connection);
-
     // -- search for purchase async
     const purchase = await findPurchaseById(dao, id).then(rows => {
-      return rows[0];
+      return rows;
     });
 
+    // -- check if found some result;
     if (purchase) {
       logger.info('Compra encontrada: ' + id);
       if (purchase.status !== purchaseStatus.PENDING) {
-        handleResponsePreconditionFailed(response);
+        handleHttp.PreconditionFailed(response);
         return;
       }
 
       const changedPurchase = request.body['compra'];
 
-      dao.update(changedPurchase, id, (err, result) => {
-        if (err) {
-          logger.info(constants.INTERNAL_ERROR_LOG + err);
-          // response.status(500).send({error: 'Não conseguimos incluir a compra.'}); // TODO handle duplicate
-          response.status(500).send(err); // TODO handle duplicate
-          connection.end();
-          return;
-        }
-        logger.info('SQL Result for update: ' + JSON.stringify(result));
-        connection.end();
-
-        handleResponseUpdate(changedPurchase, response);
-        logger.info('create end!!!');
-      });
+      updateToDatabase(dao, changedPurchase, id)
+        .then(() => {
+          handleHttp.Update(changedPurchase, response);
+        })
+        .catch(err => {
+          if (err.code === 'ER_DUP_ENTRY') {
+            handleHttp.Duplicate(response);
+          }
+          handleHttp.InternalError(response);
+        });
     } else {
       logger.info('Compra não encontrada: ' + request.params.id);
-      connection.end();
-      response.status(404).send();
+      handleHttp.NotFound(response);
       return;
     }
   };
 };
 
-const remove = async (service, app) => {
+const remove = async (service, dao) => {
   service.remove = async (request, response) => {
     logger.info('delete received');
 
     const id = request.params.id;
-
-    // -- setup database
-    const connection = app.database.connectionFactory();
-    const dao = new app.dao.purchaseDAO(connection);
 
     // -- search for purchase async
     const purchase = await findPurchaseById(dao, id).then(rows => {
@@ -120,26 +106,18 @@ const remove = async (service, app) => {
         handleResponsePreconditionFailed(response);
         return;
       }
-      dao.remove(id, (err, result) => {
-        if (err) {
-          logger.info(constants.INTERNAL_ERROR_LOG + err);
-          // response.status(500).send({error: 'Não conseguimos incluir a compra.'}); // TODO handle duplicate
-          response.status(500).send(err); // TODO handle duplicate
-          connection.end();
-          return;
-        }
-        logger.info('SQL Result for delete: ' + JSON.stringify(result));
-        connection.end();
-
-        handleResponseNoContent(response);
-        logger.info('delete end!!!');
+      removeToDatabase(dao, id)
+      .then(() => {
+        handleHttp.NoContent(response);
+      })
+      .catch(err => {
+        handleHttp.InternalError(response);
       });
-    } else {
-      logger.info('Compra não encontrada: ' + request.params.id);
-      connection.end();
-      response.status(404).send();
-      return;
-    }
+  } else {
+    logger.info('Compra não encontrada: ' + request.params.id);
+    handleHttp.NotFound(response);
+    return;
+  }
   };
 };
 
@@ -153,26 +131,55 @@ const isValidRequest = request => {
 };
 
 const findPurchaseById = async (dao, id) => {
+  logger.info('Procurando id: ' + id);
   return new Promise(async (resolve, reject) => {
     await dao.getById(id, (err, result) => {
       if (err) {
         logger.info(constants.INTERNAL_ERROR_LOG + err);
         reject();
       }
+      logger.info('SQL Result for find: ' + JSON.stringify(result));
       resolve(result.length > 0 ? result[0] : undefined);
     });
   });
 };
 
-const saveIntoDatabase = async (dao, purchase, response) => {
+const saveToDatabase = async (dao, purchase) => {
   return new Promise(async (resolve, reject) => {
     await dao.save(purchase, (err, result) => {
       if (err) {
         logger.info(constants.INTERNAL_ERROR_LOG + err);
-        // response.status(500).send({error: 'Não conseguimos incluir a compra.'}); // TODO handle duplicate
         reject(err);
       } else {
         logger.info('SQL Result for create: ' + JSON.stringify(result));
+        resolve();
+      }
+    });
+  });
+};
+
+const updateToDatabase = async (dao, purchase, id) => {
+  return new Promise(async (resolve, reject) => {
+    await dao.update(purchase, id, (err, result) => {
+      if (err) {
+        logger.info(constants.INTERNAL_ERROR_LOG + err);
+        reject(err);
+      } else {
+        logger.info('SQL Result for update: ' + JSON.stringify(result));
+        resolve();
+      }
+    });
+  });
+};
+
+const removeToDatabase = async (dao, id) => {
+  return new Promise(async (resolve, reject) => {
+    await dao.remove(id, (err, result) => {
+      if (err) {
+        logger.info(constants.INTERNAL_ERROR_LOG + err);
+        reject(err);
+      } else {
+        logger.info('SQL Result for remove: ' + JSON.stringify(result));
         resolve();
       }
     });
@@ -199,6 +206,13 @@ const setCashback = purchase => {
     purchase.porcentagem_cashback = 20;
     purchase.valor_cashback = ((value * 20) / 100).toFixed(2);
   }
+};
+
+// -- instance database connect
+const prepareDAO = app => {
+  const connection = app.database.connectionFactory();
+  const dao = new app.dao.purchaseDAO(connection);
+  return dao;
 };
 
 module.exports = app => {
