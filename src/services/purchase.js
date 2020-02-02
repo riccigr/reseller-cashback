@@ -6,9 +6,12 @@ const handleHttp = require('../helper/handleHttpResponse').handleHttp;
 const purchase = app => {
   const service = {};
   const dao = prepareDAO(app);
+
   create(service, dao);
   update(service, dao);
   remove(service, dao);
+  getByCpf(service, dao);
+
   return service;
 };
 
@@ -43,6 +46,7 @@ const create = async (service, dao) => {
   };
 };
 
+// -- update a purchase
 const update = async (service, dao) => {
   service.update = async (request, response) => {
     logger.info('update received');
@@ -89,6 +93,7 @@ const update = async (service, dao) => {
   };
 };
 
+// -- delete a purchase
 const remove = async (service, dao) => {
   service.remove = async (request, response) => {
     logger.info('delete received');
@@ -121,14 +126,31 @@ const remove = async (service, dao) => {
   };
 };
 
-const isValidRequest = request => {
-  // request.assert('compra.codigo', 'Codigo é obrigatório').notEmpty(); // TODO check regex and algo
-  request.assert('compra.valor', 'Valor é obrigatório').notEmpty(); // TODO check regex and algo
-  request.assert('compra.data', 'Data é obrigatória').notEmpty(); // TODO check size
-  request.assert('compra.cpf', 'cpf é obrigatório').notEmpty(); // TODO check regex and algo
-  const invalid = request.validationErrors();
-  return invalid;
+// -- find all purchases by cpf
+const getByCpf = async (service, dao) => {
+  service.getByCpf = async (request, response) => {
+    logger.info('getByCpf received');
+
+    const cpf = request.params.id;
+
+    // -- search for purchase async
+    const purchase = await findPurchaseByCPF(dao, cpf).then(rows => {
+      return rows;
+    });
+
+    if (purchase) {
+      logger.info('Compra encontrada: ' + cpf);
+      handleHttp.Ok(purchase, response);
+  } else {
+    logger.info('Compra não encontrada: ' + request.params.id);
+    handleHttp.NotFound(response);
+    return;
+  }
+  };
 };
+
+
+// =============================================
 
 const findPurchaseById = async (dao, id) => {
   logger.info('Procurando id: ' + id);
@@ -140,6 +162,20 @@ const findPurchaseById = async (dao, id) => {
       }
       logger.info('SQL Result for find: ' + JSON.stringify(result));
       resolve(result.length > 0 ? result[0] : undefined);
+    });
+  });
+};
+
+const findPurchaseByCPF = async (dao, cpf) => {
+  logger.info('Procurando CPF: ' + cpf);
+  return new Promise(async (resolve, reject) => {
+    await dao.getByCpf(cpf, (err, result) => {
+      if (err) {
+        logger.info(constants.INTERNAL_ERROR_LOG + err);
+        reject();
+      }
+      logger.info('SQL Result for find: ' + JSON.stringify(result));
+      resolve(result.length > 0 ? result : undefined);
     });
   });
 };
@@ -186,6 +222,19 @@ const removeToDatabase = async (dao, id) => {
   });
 };
 
+
+// =============================================
+
+
+const isValidRequest = request => {
+  // request.assert('compra.codigo', 'Codigo é obrigatório').notEmpty(); // TODO check regex and algo
+  request.assert('compra.valor', 'Valor é obrigatório').notEmpty(); // TODO check regex and algo
+  request.assert('compra.data', 'Data é obrigatória').notEmpty(); // TODO check size
+  request.assert('compra.cpf', 'cpf é obrigatório').notEmpty(); // TODO check regex and algo
+  const invalid = request.validationErrors();
+  return invalid;
+};
+
 // -- used to set status when cpf is the same proposal
 const setStatus = purchase => {
   if (purchase.cpf === '153.509.460-56') {
@@ -207,6 +256,8 @@ const setCashback = purchase => {
     purchase.valor_cashback = ((value * 20) / 100).toFixed(2);
   }
 };
+
+// =============================================
 
 // -- instance database connect
 const prepareDAO = app => {

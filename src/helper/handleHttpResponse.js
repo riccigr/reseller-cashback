@@ -4,6 +4,12 @@ const handleHttp = {
             .status(201)
             .json(body);
     },
+
+    Ok: (body, response) => {
+        response
+            .status(200)
+            .json(body);
+    },
       
     PreconditionFailed: response => {
         response

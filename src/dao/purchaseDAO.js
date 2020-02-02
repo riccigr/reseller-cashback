@@ -19,6 +19,10 @@ purchaseDAO.prototype.getById = function(id, callback){
     this._connection.query('SELECT * FROM compra WHERE codigo = ? LIMIT 1', [id], callback);
 }
 
+purchaseDAO.prototype.getByCpf = function(id, callback){
+    this._connection.query('SELECT * FROM compra WHERE cpf = ?', [id], callback);
+}
+
 module.exports = () => {
     return purchaseDAO;
 }
