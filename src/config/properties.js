@@ -24,6 +24,13 @@ const properties = {
     maxFiles:10,
     handleExceptions: false,
     humanReadableUnhandleExceptions : false
+  },
+  externalApi: {
+    cashback: {
+      'url': 'https://mdaqk8ek5j.execute-api.us-east-1.amazonaws.com/v1/cashback',
+      'token': 'ZXPURQOARHiMc6Y0flhRC1LVlZQVFRnm',
+      'timeout': 2000
+    }
   }
 };
 

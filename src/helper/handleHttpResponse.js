@@ -41,11 +41,23 @@ const handleHttp = {
             .send({ erro: 'registro duplicado.' });
     },
 
+    ServiceUnavailable: response => {
+        response
+            .status(503)
+            .send();
+    },
+
     NotFound: response => {
         response
             .status(404)
             .send({ erro: 'registro não encontrado.' });
-    }
+    },
+
+    BadGateway: response => {
+        response
+            .status(504)
+            .send();
+    },
 }
 
 module.exports = { handleHttp };
