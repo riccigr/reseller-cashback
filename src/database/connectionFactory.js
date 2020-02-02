@@ -6,7 +6,8 @@ const createDbConnection = () => {
     if(process.env.NODE_ENV === 'production'){
         var url = process.env.DB_DATABASE_URL;
         var groups = url.match(/mysql:\/\/(.*):(.*)@(.*)\/(.*)\?/);
-        return mysql.createConnection({
+        return mysql.createPool({
+            connectionLimit : 10,
             host : groups[3],
             user : groups[1],
             password : groups[2],
@@ -15,7 +16,8 @@ const createDbConnection = () => {
     }
 
     if(!process.env.NODE_ENV || process.env.NODE_ENV === 'dev'){
-        return mysql.createConnection({
+        return mysql.createPool({
+            connectionLimit : 2,
             host : properties.database.dev.host,
             user : properties.database.dev.user,
             password : properties.database.dev.password,
