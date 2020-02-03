@@ -15,7 +15,7 @@ CREATE TABLE `revendedor`
 -- but I try not over enginnering to delivery it in time
 CREATE TABLE `compra` 
 (
-    `codigo` int(10) not null,
+    `codigo` int(10) unsigned not null,
     `valor` decimal(13,2) not null,
     `data` datetime not null,
     `cpf` varchar(14) not null,

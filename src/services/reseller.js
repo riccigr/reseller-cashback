@@ -87,19 +87,6 @@ const findResellerByCpf = async (dao, cpf) => {
   });
 };
 
-// --check if request has necessary to insert into DB
-const isValidRequest = request => {
-  request.assert('revendedor.cpf', 'CPF é obrigatório').notEmpty(); // TODO check regex and algo
-  request.assert('revendedor.nome', 'Nome é obrigatório').notEmpty(); // TODO check size
-  request
-    .assert('revendedor.email', 'E-mail é obrigatório')
-    .notEmpty()
-    .isEmail(); // TODO check size
-  request.assert('revendedor.senha', 'Senha é obrigatória').notEmpty(); // set hash
-  const invalid = request.validationErrors();
-  return invalid;
-};
-
 // -- persist into database
 const saveToDatabase = async (dao, reseller) => {
   return new Promise(async (resolve, reject) => {

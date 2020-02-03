@@ -20,14 +20,6 @@ const create = async (service, dao) => {
   service.create = async (request, response) => {
     logger.info('create received');
 
-    // -- validate request;
-    const invalid = isValidRequest(request);
-    if (invalid) {
-      logger.info(constants.CLIENT_ERROR_LOG + invalid);
-      response.status(422).send({ errors: invalid });
-      return;
-    }
-
     const purchase = request.body['compra'];
 
     setStatus(purchase);
@@ -53,13 +45,6 @@ const update = async (service, dao) => {
 
     const id = request.params.id;
 
-    // -- validate request;
-    const invalid = isValidRequest(request);
-    if (invalid) {
-      logger.info(constants.CLIENT_ERROR_LOG + invalid);
-      response.status(422).send({ errors: invalid });
-      return;
-    }
     // -- search for purchase async
     const purchase = await findPurchaseById(dao, id).then(rows => {
       return rows;
@@ -224,16 +209,6 @@ const removeToDatabase = async (dao, id) => {
 
 
 // =============================================
-
-
-const isValidRequest = request => {
-  // request.assert('compra.codigo', 'Codigo é obrigatório').notEmpty(); // TODO check regex and algo
-  request.assert('compra.valor', 'Valor é obrigatório').notEmpty(); // TODO check regex and algo
-  request.assert('compra.data', 'Data é obrigatória').notEmpty(); // TODO check size
-  request.assert('compra.cpf', 'cpf é obrigatório').notEmpty(); // TODO check regex and algo
-  const invalid = request.validationErrors();
-  return invalid;
-};
 
 // -- used to set status when cpf is the same proposal
 const setStatus = purchase => {
