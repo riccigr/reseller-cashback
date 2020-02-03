@@ -41,6 +41,12 @@ const handleHttp = {
             .send({ erro: 'registro duplicado.' });
     },
 
+    BadRequest: (body, response) => {
+        response
+            .status(400)
+            .json(body);
+    },
+
     ServiceUnavailable: response => {
         response
             .status(503)

@@ -1,8 +1,11 @@
+const validate = require('../validation/reseller').validate;
+
+
 module.exports = (app) => {
     const reseller = app.services.reseller;
 
-    app.post('/revendedor', reseller.create);
-    app.post('/revendedor/login', reseller.login);
+    app.post('/revendedor', validate.create, reseller.create);
+    app.post('/revendedor/login', validate.login, reseller.login);
 
     return this;
 } 

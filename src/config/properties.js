@@ -3,20 +3,20 @@ const properties = {
     port: 3000
   },
   jwt: {
-    secret: 'extremesecret',
+    secret: 'extremesecret', // --should be in env var
     expiresIn : 300
   },
   database: {
     dev: {
       host: 'localhost',
       user: 'root',
-      password: 'root',
+      password: 'root', // --should be in env var
       database: 'db_reseller'
     },
     test: {
       host: 'localhost',
       user: 'root',
-      password: 'root',
+      password: 'root', // --should be in env var
       database: 'db_reseller_test'
     }
   },

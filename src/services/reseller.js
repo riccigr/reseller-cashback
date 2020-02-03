@@ -19,14 +19,6 @@ const reseller = app => {
 // -- Insert a new reseller
 const create = (service, dao) => {
   service.create = (request, response) => {
-    // -- validate request;
-    const invalid = isValidRequest(request);
-    if (invalid) {
-      logger.info(constants.CLIENT_ERROR_LOG + invalid);
-      response.status(422).send({ errors: invalid });
-      return;
-    }
-
     const reseller = request.body['revendedor'];
 
     encryptPassword(reseller);
@@ -46,44 +38,38 @@ const create = (service, dao) => {
 
 const login = async (service, dao) => {
   service.login = async (request, response) => {
-    // -- validate request;
-    const invalid = isValidLoginRequest(request);
-    if (invalid) {
-      logger.info(constants.CLIENT_ERROR_LOG + invalid);
-      response.status(422).send({ errors: invalid });
-      return;
-    }
-
     const login = request.body['login'];
     const cpf = login.cpf;
 
-    const reseller = await findResellerByCpf(dao, cpf).then(rows => {
-      return rows;
-    }).catch((err) => {
-      handleHttp.InternalError(response);
-      return;
-    });
+    const reseller = await findResellerByCpf(dao, cpf)
+      .then(rows => {
+        return rows;
+      })
+      .catch(err => {
+        handleHttp.InternalError(response);
+        return;
+      });
 
-    if(reseller){
+    if (reseller) {
       const passwordOK = checkHash(login.senha, reseller.senha);
       if (passwordOK) {
         logger.info('Login ok: ' + cpf);
 
         // -- generete jwt
         const token = jwt.sign({ cpf }, properties.jwt.secret, {
-          expiresIn: properties.jwt.expiresIn 
+          expiresIn: properties.jwt.expiresIn
         });
 
         handleHttp.Ok({ auth: true, token: token }, response);
         return;
       } else {
-        handleHttp.Unauthorized({ auth: false}, response);
+        handleHttp.Unauthorized({ auth: false }, response);
         return;
       }
     } else {
       handleHttp.NotFound(response);
       return;
-    } 
+    }
   };
 };
 
@@ -114,13 +100,6 @@ const isValidRequest = request => {
   return invalid;
 };
 
-const isValidLoginRequest = request => {
-  request.assert('login.cpf', 'CPF é obrigatório').notEmpty(); // TODO check regex and algo
-  request.assert('login.senha', 'Senha é obrigatória').notEmpty(); // set hash
-  const invalid = request.validationErrors();
-  return invalid;
-};
-
 // -- persist into database
 const saveToDatabase = async (dao, reseller) => {
   return new Promise(async (resolve, reject) => {
@@ -142,20 +121,18 @@ const handleResponse = (reseller, response) => {
   handleHttp.Create(reseller, response);
 };
 
-// -- deal 
-const encryptPassword = (reseller) => {
-    reseller.senha = generateHash(reseller.senha);
-}
+// -- deal
+const encryptPassword = reseller => {
+  reseller.senha = generateHash(reseller.senha);
+};
 
 // -- instance database connect
 const prepareDAO = app => {
-    const connection = app.database.connectionFactory();
-    const dao = new app.dao.resellerDAO(connection);
-    return dao;
-  };
+  const connection = app.database.connectionFactory();
+  const dao = new app.dao.resellerDAO(connection);
+  return dao;
+};
 
 module.exports = app => {
   return reseller(app);
 };
-
-
