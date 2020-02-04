@@ -4,11 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "env NODE_ENV=test nyc jasmine",
+    "test-init": "node ./node_modules/jasmine/bin/jasmine.js init",
+    "coverage": "nyc --reporter=lcov --reporter=text-lcov npm test",
     "dev": "nodemon index.js",
     "start": "node index.js"
   },
-  "author": "",
+  "author": "Ricci",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.0",
@@ -16,14 +18,17 @@
     "crypto": "^1.0.1",
     "express": "^4.17.1",
     "express-validator": "^5.0.3",
+    "jasmine": "^3.5.0",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.24.0",
     "morgan": "^1.9.0",
     "mysql": "^2.18.1",
     "request": "^2.88.0",
+    "supertest": "^4.0.2",
     "winston": "^2.4.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.2"
+    "nodemon": "^2.0.2",
+    "nyc": "^15.0.0"
   }
 }

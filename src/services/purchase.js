@@ -212,7 +212,7 @@ const removeToDatabase = async (dao, id) => {
 
 // -- used to set status when cpf is the same proposal
 const setStatus = purchase => {
-  if (purchase.cpf === '153.509.460-56') {
+  if (purchase.cpf === '15350946056') {
     purchase.status = purchaseStatus.APPROVED;
   }
 };
