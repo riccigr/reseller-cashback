@@ -23,5 +23,12 @@ CREATE TABLE `compra`
     `valor_cashback` decimal(13,2) not null,
     `porcentagem_cashback`  decimal(13,2) not null,
     primary key (`codigo`),
-    foreign key(`cpf`) REFERENCES `revendedor`(`cpf`)
+    foreign key(`cpf`) REFERENCES `revendedor`(`cpf`),
+    foreign key(`status`) REFERENCES `status_compra`(`status`)
+);
+
+
+CREATE TABLE `status_compra` (
+	`status` int(2) not null,
+    `descricao` varchar(15) not null
 );

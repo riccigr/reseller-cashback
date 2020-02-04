@@ -22,6 +22,7 @@ const create = async (service, dao) => {
 
     const purchase = request.body['compra'];
 
+    cleanupPayload(purchase);
     setStatus(purchase);
     setCashback(purchase);
 
@@ -59,10 +60,13 @@ const update = async (service, dao) => {
       }
 
       const changedPurchase = request.body['compra'];
+      cleanupPayload(changedPurchase);
+      setStatus(changedPurchase);
+      setCashback(changedPurchase);
 
       updateToDatabase(dao, changedPurchase, id)
         .then(() => {
-          handleHttp.Update(changedPurchase, response);
+          handleHttp.Update({}, response);
         })
         .catch(err => {
           if (err.code === 'ER_DUP_ENTRY') {
@@ -116,7 +120,7 @@ const getByCpf = async (service, dao) => {
   service.getByCpf = async (request, response) => {
     logger.info('getByCpf received');
 
-    const cpf = request.params.id;
+    const cpf = Number(request.params.id);
 
     // -- search for purchase async
     const purchase = await findPurchaseByCPF(dao, cpf).then(rows => {
@@ -127,7 +131,7 @@ const getByCpf = async (service, dao) => {
       logger.info('Compra encontrada: ' + cpf);
       handleHttp.Ok(purchase, response);
   } else {
-    logger.info('Compra não encontrada: ' + request.params.id);
+    logger.info('Compra não encontrada: ' + cpf);
     handleHttp.NotFound(response);
     return;
   }
@@ -210,6 +214,12 @@ const removeToDatabase = async (dao, id) => {
 
 // =============================================
 
+const cleanupPayload = (purchase) => {
+  delete purchase.status;
+  delete purchase.valor_cashback;
+  delete purchase.porcentagem_cashback;
+}
+
 // -- used to set status when cpf is the same proposal
 const setStatus = purchase => {
   if (purchase.cpf === '15350946056') {
@@ -244,3 +254,5 @@ const prepareDAO = app => {
 module.exports = app => {
   return purchase(app);
 };
+
+

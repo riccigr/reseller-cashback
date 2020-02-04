@@ -11,7 +11,7 @@ const properties = {
       host: 'localhost',
       user: 'root',
       password: 'root', // --should be in env var
-      database: 'db_reseller_test'
+      database: 'db_reseller'
     },
     test: {
       host: 'localhost',

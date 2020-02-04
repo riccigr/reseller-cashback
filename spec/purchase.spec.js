@@ -62,10 +62,6 @@ describe('Purchase', () => {
     });
     it('should update one', () => {
       expect(data.status).toBe(200);
-      expect(Object.keys(data.body)).toContain('codigo');
-      expect(Object.keys(data.body)).toContain('valor');
-      expect(Object.keys(data.body)).toContain('cpf');
-      expect(Object.keys(data.body)).toContain('data');
     });
   }); 
 

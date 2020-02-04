@@ -20,7 +20,8 @@ purchaseDAO.prototype.getById = function(id, callback){
 }
 
 purchaseDAO.prototype.getByCpf = function(id, callback){
-    this._connection.query('SELECT * FROM compra WHERE cpf = ?', [id], callback);
+    this._connection.query(`SELECT c.codigo, c.valor, c.data, c.cpf, c.valor_cashback, c.porcentagem_cashback, sc.descricao 
+                            FROM compra c LEFT JOIN status_compra sc on c.status = sc.status WHERE cpf = ?`, [id], callback);
 }
 
 module.exports = () => {

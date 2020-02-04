@@ -3,4 +3,9 @@ const PurchaseStatus = {
     APPROVED: 1,
 }
 
-module.exports = { PurchaseStatus };
+const StatusDescription = {
+    PENDING: 'EM VALIDAÇÃO',
+    APPROVED: 'APROVADO',
+}
+
+module.exports = { PurchaseStatus, StatusDescription };
