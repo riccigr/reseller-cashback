@@ -8,6 +8,8 @@
     "test-init": "node ./node_modules/jasmine/bin/jasmine.js init",
     "coverage": "nyc --reporter=lcov --reporter=text-lcov npm test",
     "dev": "nodemon index.js",
+    "lint": "eslint 'src/**/*.js' --fix",
+    "format": "prettier-eslint 'server/**/*.{js,json}' --write",
     "start": "node index.js"
   },
   "author": "Ricci",
@@ -28,7 +30,18 @@
     "winston": "^2.4.0"
   },
   "devDependencies": {
+    "eslint": "^7.2.0",
+    "eslint-config-airbnb": "^18.2.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-jsx-a11y": "^6.3.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-react": "^7.20.0",
+    "eslint-plugin-react-hooks": "^4.0.0",
     "nodemon": "^2.0.2",
-    "nyc": "^15.0.0"
+    "nyc": "^15.0.0",
+    "prettier-eslint-cli": "^5.0.0"
   }
 }

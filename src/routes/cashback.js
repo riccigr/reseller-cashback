@@ -1,7 +1,7 @@
-module.exports = (app) => {
-    const cashback = app.services.cashback;
+module.exports = app => {
+  const cashbackService = app.services.cashback;
 
-    app.get('/cashback/:id', cashback.get);
+  app.get('/cashback/:id', cashbackService.get);
 
-    return this;
-} 
+  return this;
+};

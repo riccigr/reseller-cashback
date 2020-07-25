@@ -4,7 +4,7 @@ const properties = {
   },
   jwt: {
     secret: 'extremesecret', // --should be in env var
-    expiresIn : 300
+    expiresIn: 300
   },
   database: {
     dev: {
@@ -21,19 +21,19 @@ const properties = {
     }
   },
   winston: {
-    logDir: "logs",
-    level: "info",
-    filename: "logs/info.log",
+    logDir: 'logs',
+    level: 'info',
+    filename: 'logs/info.log',
     maxsize: 6000,
-    maxFiles:10,
+    maxFiles: 10,
     handleExceptions: false,
-    humanReadableUnhandleExceptions : false
+    humanReadableUnhandleExceptions: false
   },
   externalApi: {
     cashback: {
-      'url': 'https://mdaqk8ek5j.execute-api.us-east-1.amazonaws.com/v1/cashback',
-      'token': 'ZXPURQOARHiMc6Y0flhRC1LVlZQVFRnm',
-      'timeout': 2000
+      url: 'https://mdaqk8ek5j.execute-api.us-east-1.amazonaws.com/v1/cashback',
+      token: 'ZXPURQOARHiMc6Y0flhRC1LVlZQVFRnm',
+      timeout: 2000
     }
   }
 };

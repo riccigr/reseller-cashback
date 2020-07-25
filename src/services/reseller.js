@@ -19,7 +19,7 @@ const reseller = app => {
 // -- Insert a new reseller
 const create = (service, dao) => {
   service.create = (request, response) => {
-    const reseller = request.body['revendedor'];
+    const reseller = request.body.revendedor;
 
     encryptPassword(reseller);
 
@@ -38,7 +38,7 @@ const create = (service, dao) => {
 
 const login = async (service, dao) => {
   service.login = async (request, response) => {
-    const login = request.body['login'];
+    const login = request.body.login;
     const cpf = login.cpf;
 
     const reseller = await findResellerByCpf(dao, cpf)
@@ -47,41 +47,37 @@ const login = async (service, dao) => {
       })
       .catch(err => {
         handleHttp.InternalError(response);
-        return;
       });
 
     if (reseller) {
       const passwordOK = checkHash(login.senha, reseller.senha);
       if (passwordOK) {
-        logger.info('Login ok: ' + cpf);
+        logger.info(`Login ok: ${cpf}`);
 
         // -- generete jwt
         const token = jwt.sign({ cpf }, properties.jwt.secret, {
           expiresIn: properties.jwt.expiresIn
         });
 
-        handleHttp.Ok({ auth: true, token: token }, response);
-        return;
+        handleHttp.Ok({ auth: true, token }, response);
       } else {
         handleHttp.Unauthorized({ auth: false }, response);
-        return;
       }
     } else {
       handleHttp.NotFound(response);
-      return;
     }
   };
 };
 
 const findResellerByCpf = async (dao, cpf) => {
-  logger.info('Procurando id: ' + cpf);
+  logger.info(`Procurando id: ${cpf}`);
   return new Promise(async (resolve, reject) => {
     await dao.getById(cpf, (err, result) => {
       if (err) {
         logger.info(constants.INTERNAL_ERROR_LOG + err);
         reject();
       }
-      logger.info('SQL Result for find: ' + JSON.stringify(result));
+      logger.info(`SQL Result for find: ${JSON.stringify(result)}`);
       resolve(result.length > 0 ? result[0] : undefined);
     });
   });
@@ -95,7 +91,7 @@ const saveToDatabase = async (dao, reseller) => {
         logger.info(constants.INTERNAL_ERROR_LOG + err);
         reject(err);
       } else {
-        logger.info('SQL Result for create: ' + JSON.stringify(result));
+        logger.info(`SQL Result for create: ${JSON.stringify(result)}`);
         resolve();
       }
     });

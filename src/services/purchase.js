@@ -20,7 +20,7 @@ const create = async (service, dao) => {
   service.create = async (request, response) => {
     logger.info('create received');
 
-    const purchase = request.body['compra'];
+    const purchase = request.body.compra;
 
     cleanupPayload(purchase);
     setStatus(purchase);
@@ -53,13 +53,13 @@ const update = async (service, dao) => {
 
     // -- check if found some result;
     if (purchase) {
-      logger.info('Compra encontrada: ' + id);
+      logger.info(`Compra encontrada: ${id}`);
       if (purchase.status !== purchaseStatus.PENDING) {
         handleHttp.PreconditionFailed(response);
         return;
       }
 
-      const changedPurchase = request.body['compra'];
+      const changedPurchase = request.body.compra;
       cleanupPayload(changedPurchase);
       setStatus(changedPurchase);
       setCashback(changedPurchase);
@@ -75,9 +75,8 @@ const update = async (service, dao) => {
           handleHttp.InternalError(response);
         });
     } else {
-      logger.info('Compra não encontrada: ' + request.params.id);
+      logger.info(`Compra não encontrada: ${request.params.id}`);
       handleHttp.NotFound(response);
-      return;
     }
   };
 };
@@ -95,23 +94,22 @@ const remove = async (service, dao) => {
     });
 
     if (purchase) {
-      logger.info('Compra encontrada: ' + id);
+      logger.info(`Compra encontrada: ${id}`);
       if (purchase.status !== purchaseStatus.PENDING) {
         handleResponsePreconditionFailed(response);
         return;
       }
       removeToDatabase(dao, id)
-      .then(() => {
-        handleHttp.NoContent(response);
-      })
-      .catch(err => {
-        handleHttp.InternalError(response);
-      });
-  } else {
-    logger.info('Compra não encontrada: ' + request.params.id);
-    handleHttp.NotFound(response);
-    return;
-  }
+        .then(() => {
+          handleHttp.NoContent(response);
+        })
+        .catch(err => {
+          handleHttp.InternalError(response);
+        });
+    } else {
+      logger.info(`Compra não encontrada: ${request.params.id}`);
+      handleHttp.NotFound(response);
+    }
   };
 };
 
@@ -128,42 +126,40 @@ const getByCpf = async (service, dao) => {
     });
 
     if (purchase) {
-      logger.info('Compra encontrada: ' + cpf);
+      logger.info(`Compra encontrada: ${cpf}`);
       handleHttp.Ok(purchase, response);
-  } else {
-    logger.info('Compra não encontrada: ' + cpf);
-    handleHttp.NotFound(response);
-    return;
-  }
+    } else {
+      logger.info(`Compra não encontrada: ${cpf}`);
+      handleHttp.NotFound(response);
+    }
   };
 };
-
 
 // =============================================
 
 const findPurchaseById = async (dao, id) => {
-  logger.info('Procurando id: ' + id);
+  logger.info(`Procurando id: ${id}`);
   return new Promise(async (resolve, reject) => {
     await dao.getById(id, (err, result) => {
       if (err) {
         logger.info(constants.INTERNAL_ERROR_LOG + err);
         reject();
       }
-      logger.info('SQL Result for find: ' + JSON.stringify(result));
+      logger.info(`SQL Result for find: ${JSON.stringify(result)}`);
       resolve(result.length > 0 ? result[0] : undefined);
     });
   });
 };
 
 const findPurchaseByCPF = async (dao, cpf) => {
-  logger.info('Procurando CPF: ' + cpf);
+  logger.info(`Procurando CPF: ${cpf}`);
   return new Promise(async (resolve, reject) => {
     await dao.getByCpf(cpf, (err, result) => {
       if (err) {
         logger.info(constants.INTERNAL_ERROR_LOG + err);
         reject();
       }
-      logger.info('SQL Result for find: ' + JSON.stringify(result));
+      logger.info(`SQL Result for find: ${JSON.stringify(result)}`);
       resolve(result.length > 0 ? result : undefined);
     });
   });
@@ -176,7 +172,7 @@ const saveToDatabase = async (dao, purchase) => {
         logger.info(constants.INTERNAL_ERROR_LOG + err);
         reject(err);
       } else {
-        logger.info('SQL Result for create: ' + JSON.stringify(result));
+        logger.info(`SQL Result for create: ${JSON.stringify(result)}`);
         resolve();
       }
     });
@@ -190,7 +186,7 @@ const updateToDatabase = async (dao, purchase, id) => {
         logger.info(constants.INTERNAL_ERROR_LOG + err);
         reject(err);
       } else {
-        logger.info('SQL Result for update: ' + JSON.stringify(result));
+        logger.info(`SQL Result for update: ${JSON.stringify(result)}`);
         resolve();
       }
     });
@@ -204,21 +200,20 @@ const removeToDatabase = async (dao, id) => {
         logger.info(constants.INTERNAL_ERROR_LOG + err);
         reject(err);
       } else {
-        logger.info('SQL Result for remove: ' + JSON.stringify(result));
+        logger.info(`SQL Result for remove: ${JSON.stringify(result)}`);
         resolve();
       }
     });
   });
 };
 
-
 // =============================================
 
-const cleanupPayload = (purchase) => {
+const cleanupPayload = purchase => {
   delete purchase.status;
   delete purchase.valor_cashback;
   delete purchase.porcentagem_cashback;
-}
+};
 
 // -- used to set status when cpf is the same proposal
 const setStatus = purchase => {
@@ -254,5 +249,3 @@ const prepareDAO = app => {
 module.exports = app => {
   return purchase(app);
 };
-
-
