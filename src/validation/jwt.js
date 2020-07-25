@@ -11,7 +11,17 @@ const verifyJWT = (request, response, next) => {
     return handleHttp.Unauthorized({ auth: false, erro: 'Informe o token no header.' }, response);
   }
 
-
+  jwt.verify(token, properties.jwt.secret, (err, cpf) => {
+    if (err) {
+      if (err.message === 'jwt expired') {
+        return handleHttp.Unauthorized({ auth: false, erro: 'Token expirado' }, response);
+      }
+      logger.info(err);
+      return handleHttp.InternalError(response);
+    }
+    logger.info(`Login OK: ${cpf}`);
+    next();
+  });
 };
 
 module.exports = { verifyJWT };
